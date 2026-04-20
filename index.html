@@ -28,6 +28,15 @@
     <!-- Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
+    <!-- Import Map para resolver dependencias de IA (Soluciona el error de lodash) -->
+    <script type="importmap">
+    {
+      "imports": {
+        "lodash": "https://cdn.jsdelivr.net/npm/lodash@4.17.21/+esm"
+      }
+    }
+    </script>
+
     <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -154,21 +163,42 @@
             <div id="panelManual" class="hidden flex-col items-center gap-4 mt-6">
                 <div class="info-box info-box-brand">
                     <i data-lucide="info" class="w-4 h-4 text-brand-500 flex-shrink-0 mt-0.5"></i>
-                    <p><strong>Varita Mágica:</strong> Haz clic en el fondo para borrarlo. Se detendrá al chocar con tu cuerpo.</p>
+                    <p><strong>Varita Mágica:</strong> Haz clic en el fondo. <strong>Goma:</strong> Arrastra para borrar manualmente partes difíciles.</p>
                 </div>
 
-                <div class="w-full max-w-lg flex flex-col sm:flex-row gap-3 bg-slate-50/80 p-3 rounded-xl border border-slate-200">
-                    <div class="flex-1">
-                        <label class="text-xs font-bold text-slate-600 block mb-1">Modo de Borrado:</label>
-                        <select id="manualMode" class="input-field text-sm">
-                            <option value="contiguous">Varita (Solo zona continua)</option>
-                            <option value="global">Global (Todo ese color)</option>
-                        </select>
+                <div class="w-full max-w-lg flex flex-col gap-4 bg-slate-50/80 p-4 rounded-xl border border-slate-200">
+                    <div class="flex flex-wrap gap-3">
+                        <div class="flex-1 min-w-[140px]">
+                            <label class="text-xs font-bold text-slate-600 block mb-1">Herramienta:</label>
+                            <div class="flex border rounded-lg overflow-hidden bg-white">
+                                <button id="btnToolWand" class="flex-1 py-1 px-2 bg-brand-100 text-brand-700 font-bold text-xs border-r">Varita</button>
+                                <button id="btnToolEraser" class="flex-1 py-1 px-2 text-slate-500 font-bold text-xs">Goma</button>
+                            </div>
+                        </div>
+                        <div class="flex-1 min-w-[140px]">
+                            <label class="text-xs font-bold text-slate-600 block mb-1">Modo Varita:</label>
+                            <select id="manualMode" class="w-full border rounded p-1 text-xs bg-white outline-none">
+                                <option value="contiguous">Solo zona continua</option>
+                                <option value="global">Todo ese color</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="flex-1">
-                        <label class="text-xs font-bold text-slate-600 block mb-1">Fuerza (Tolerancia):</label>
-                        <input type="range" id="toleranceSlider" min="5" max="150" value="40"
-                            class="w-full accent-brand-600 mt-2">
+                    
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <div class="flex-1" id="boxTolerance">
+                            <label class="text-xs font-bold text-slate-600 block mb-1 flex justify-between">
+                                Fuerza Varita: <span id="valTolerance">40</span>
+                            </label>
+                            <input type="range" id="toleranceSlider" min="5" max="150" value="40"
+                                class="w-full accent-brand-600">
+                        </div>
+                        <div class="flex-1 hidden" id="boxBrushSize">
+                            <label class="text-xs font-bold text-slate-600 block mb-1 flex justify-between">
+                                Tamaño Goma: <span id="valBrush">30</span>
+                            </label>
+                            <input type="range" id="brushSlider" min="5" max="100" value="30"
+                                class="w-full accent-brand-600">
+                        </div>
                     </div>
                 </div>
 

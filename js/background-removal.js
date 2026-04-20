@@ -1,5 +1,5 @@
 /**
- * background-removal.js — Remoción de fondo (IA + Manual)
+ * background-removal.js — Remoción de fondo (IA + Manual + Borrador)
  */
 
 const BackgroundRemoval = (() => {
@@ -8,12 +8,7 @@ const BackgroundRemoval = (() => {
     const _manualImg = new Image();
 
     /**
-     * Carga dinámica de la librería imgly para remoción de fondo por IA
-     * @param {string} originalImageSrc - Data URL de la imagen original
-     * @param {HTMLElement} btnRemoveBg - Botón de remoción
-     * @param {HTMLElement} aiStatus - Elemento de estado
-     * @param {HTMLImageElement} previewImg - Imagen de preview
-     * @param {function} onSuccess - Callback con la nueva URL de la imagen
+     * Remoción por IA usando Import Map
      */
     async function removeWithAI(originalImageSrc, btnRemoveBg, aiStatus, previewImg, onSuccess) {
         btnRemoveBg.disabled = true;
@@ -24,38 +19,30 @@ const BackgroundRemoval = (() => {
         try {
             if (!window.imglyRemoveBackground) {
                 try {
-                    // Usamos el parámetro ?bundle de jsDelivr para que el servidor empaquete lodash correctamente
-                    const module = await import("https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.3/dist/index.mjs?bundle");
+                    // Usamos la dirección directa pero ahora el navegador sabe resolver 'lodash' vía el Import Map
+                    const module = await import("https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.3/dist/index.mjs");
                     window.imglyRemoveBackground = module.default || module;
                 } catch (e) {
-                    throw new Error('No se pudo cargar la librería de IA: ' + e.message);
+                    throw new Error('Error al inicializar modelos de IA. Prueba la Varita Manual.');
                 }
             }
 
-            btnRemoveBg.innerHTML = '<i data-lucide="loader" class="w-5 h-5 animate-spin"></i> Recortando persona...';
+            btnRemoveBg.innerHTML = '<i data-lucide="loader" class="w-5 h-5 animate-spin"></i> Analizando cuerpo...';
             lucide.createIcons();
 
-            // Ejecutar la IA. Se descargará el modelo ONNX en caché.
-            // No pasamos publicPath para que use el default (staticimgly.com)
             const imageBlob = await window.imglyRemoveBackground(originalImageSrc);
-
             const newSrc = URL.createObjectURL(imageBlob);
 
             previewImg.src = newSrc;
-
-            btnRemoveBg.innerHTML = '<i data-lucide="check" class="w-5 h-5"></i> ¡Fondo exterior eliminado!';
-            btnRemoveBg.classList.add('btn-success');
-            btnRemoveBg.classList.remove('btn-accent');
+            btnRemoveBg.innerHTML = '<i data-lucide="check" class="w-5 h-5"></i> IA Completada';
+            btnRemoveBg.classList.replace('btn-accent', 'btn-success');
             aiStatus.classList.add('hidden');
 
             onSuccess(newSrc);
         } catch (error) {
-            console.error("[BackgroundRemoval] Error IA:", error);
-            Toast.error(
-                'IA no disponible',
-                'La conexión a los servidores de IA fue bloqueada. Usa la pestaña "Varita Manual" para borrar tu fondo.'
-            );
-            btnRemoveBg.innerHTML = '<i data-lucide="wand-2" class="w-5 h-5"></i> Recortarme Mágicamente (IA)';
+            console.error("[BackgroundRemoval] Fallo IA:", error);
+            Toast.error('IA saturada o bloqueada', 'Se ha activado el modo manual para que puedas borrar el fondo tú mismo.');
+            btnRemoveBg.innerHTML = '<i data-lucide="wand-2" class="w-5 h-5"></i> Reintentar IA';
             aiStatus.classList.add('hidden');
         } finally {
             btnRemoveBg.disabled = false;
@@ -63,22 +50,15 @@ const BackgroundRemoval = (() => {
         }
     }
 
-    /**
-     * Inicializa el canvas manual con la imagen dada
-     */
     function initManualCanvas(src, canvas) {
         _manualImg.onload = () => {
-            const MAX_SIZE = 600;
+            const MAX_SIZE = 800;
             let w = _manualImg.width, h = _manualImg.height;
-
             if (w > MAX_SIZE || h > MAX_SIZE) {
                 const ratio = Math.min(MAX_SIZE / w, MAX_SIZE / h);
-                w = Math.round(w * ratio);
-                h = Math.round(h * ratio);
+                w = Math.round(w * ratio); h = Math.round(h * ratio);
             }
-
-            canvas.width = w;
-            canvas.height = h;
+            canvas.width = w; canvas.height = h;
             _manualCtx = canvas.getContext('2d');
             _manualCtx.drawImage(_manualImg, 0, 0, w, h);
             _manualImgData = _manualCtx.getImageData(0, 0, w, h);
@@ -87,75 +67,60 @@ const BackgroundRemoval = (() => {
     }
 
     /**
-     * Procesar clic de varita mágica en el canvas
+     * Varita Mágica Optimizada
      */
-    function processManualClick(e, canvas, tolerance, mode) {
-        if (!_manualImgData) {
-            Toast.warning('No hay imagen', 'Primero sube una foto antes de usar la varita.');
-            return null;
-        }
-
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-        const startX = Math.floor((e.clientX - rect.left) * scaleX);
-        const startY = Math.floor((e.clientY - rect.top) * scaleY);
-
-        const w = canvas.width;
-        const h = canvas.height;
+    function processWand(startX, startY, canvas, tolerance, mode) {
+        if (!_manualImgData) return null;
+        const w = canvas.width, h = canvas.height;
         const data = _manualImgData.data;
 
-        // Verificar que el clic está dentro de los límites
-        if (startX < 0 || startX >= w || startY < 0 || startY >= h) {
-            return null;
-        }
-
         const targetPos = (startY * w + startX) * 4;
-        const tR = data[targetPos], tG = data[targetPos + 1],
-              tB = data[targetPos + 2], tA = data[targetPos + 3];
+        const tR = data[targetPos], tG = data[targetPos + 1], tB = data[targetPos + 2], tA = data[targetPos + 3];
 
-        // Ya es transparente
         if (tA === 0) return null;
 
-        const isContiguous = mode === "contiguous";
-
-        if (!isContiguous) {
-            // Modo global: borrar todos los píxeles de ese color
+        if (mode === "global") {
             for (let i = 0; i < data.length; i += 4) {
                 if (data[i + 3] === 0) continue;
-                const r = data[i], g = data[i + 1], b = data[i + 2];
-                const dist = Math.sqrt((r - tR) ** 2 + (g - tG) ** 2 + (b - tB) ** 2);
+                const dist = Math.sqrt((data[i]-tR)**2 + (data[i+1]-tG)**2 + (data[i+2]-tB)**2);
                 if (dist <= tolerance) data[i + 3] = 0;
             }
         } else {
-            // Modo contiguo: flood fill
             const stack = [startX, startY];
             const visited = new Uint8Array(w * h);
-
             while (stack.length > 0) {
-                const y = stack.pop();
-                const x = stack.pop();
+                const y = stack.pop(), x = stack.pop();
                 const idx = y * w + x;
-
                 if (x < 0 || x >= w || y < 0 || y >= h || visited[idx]) continue;
                 visited[idx] = 1;
-
                 const p = idx * 4;
                 if (data[p + 3] === 0) continue;
-
-                const r = data[p], g = data[p + 1], b = data[p + 2];
-                const dist = Math.sqrt((r - tR) ** 2 + (g - tG) ** 2 + (b - tB) ** 2);
-
+                const dist = Math.sqrt((data[p]-tR)**2 + (data[p+1]-tG)**2 + (data[p+2]-tB)**2);
                 if (dist <= tolerance) {
-                    data[p + 3] = 0;
-                    stack.push(x + 1, y, x - 1, y, x, y + 1, x, y - 1);
+                    data[p+3] = 0;
+                    stack.push(x+1, y, x-1, y, x, y+1, x, y-1);
                 }
             }
         }
-
         _manualCtx.putImageData(_manualImgData, 0, 0);
         return canvas.toDataURL('image/png');
     }
 
-    return { removeWithAI, initManualCanvas, processManualClick };
+    /**
+     * Goma de Borrar (Pincel)
+     */
+    function processEraser(x, y, canvas, size) {
+        if (!_manualCtx) return null;
+        _manualCtx.globalCompositeOperation = 'destination-out';
+        _manualCtx.beginPath();
+        _manualCtx.arc(x, y, size / 2, 0, Math.PI * 2);
+        _manualCtx.fill();
+        _manualCtx.globalCompositeOperation = 'source-over';
+        
+        // Actualizar datos de imagen actuales
+        _manualImgData = _manualCtx.getImageData(0, 0, canvas.width, canvas.height);
+        return canvas.toDataURL('image/png');
+    }
+
+    return { removeWithAI, initManualCanvas, processWand, processEraser };
 })();
