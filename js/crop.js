@@ -57,18 +57,21 @@ const CropManager = (() => {
 
             const sX = CROP_W / _imgObj.naturalWidth;
             const sY = CROP_H / _imgObj.naturalHeight;
+            
+            // Usamos Math.max para que la imagen siempre 'cubra' el área sin estirarse
             _baseScale = Math.max(sX, sY);
 
             _zoomSlider.min = 1;
-            _zoomSlider.max = 3;
+            _zoomSlider.max = 5; // Aumentamos el zoom máximo para fotos lejanas
             _zoomSlider.value = 1;
 
-            _updateCrop();
-
-            // Centrar imagen
+            _scale = _baseScale;
+            
+            // Centrar automáticamente la imagen al inicio
             _ox = (CROP_W - (_imgObj.naturalWidth * _scale)) / 2;
             _oy = (CROP_H - (_imgObj.naturalHeight * _scale)) / 2;
-            _applyTransform();
+            
+            _updateCrop();
         };
 
         _imgObj.onerror = () => {

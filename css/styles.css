@@ -375,6 +375,8 @@ body {
     transform-origin: top left;
     cursor: grab;
     will-change: transform;
+    max-width: none !important;
+    max-height: none !important;
 }
 
 .crop-image:active {
