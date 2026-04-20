@@ -24,8 +24,8 @@ const BackgroundRemoval = (() => {
         try {
             if (!window.imglyRemoveBackground) {
                 try {
-                    // Importamos el módulo ESM resolviendo dependencias con jsDelivr
-                    const module = await import("https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.3/+esm");
+                    // Importamos el módulo ESM resolviendo dependencias mediante esm.sh (soporta mejor lodash)
+                    const module = await import("https://esm.sh/@imgly/background-removal@1.4.3?bundle-deps");
                     window.imglyRemoveBackground = module.default || module;
                 } catch (e) {
                     throw new Error('No se pudo cargar la librería de IA: ' + e.message);
