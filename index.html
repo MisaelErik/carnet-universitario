@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Foto Carné UNAC — Generador Oficial</title>
+    
+    <!-- SEO & Metadata -->
+    <meta name="description" content="Herramienta gratuita para generar tu foto carné UNAC con formato oficial. Recorta, quita fondo y exporta en alta calidad para cumplir los requisitos de la SUNEDU.">
+    <meta name="keywords" content="UNAC, foto carnet, generador, universidad nacional del callao, sunedu, CE, pasaporte, DNI">
+    <meta name="author" content="Comunidad UNAC">
+    <meta name="theme-color" content="#1e3a5f">
+    
+    <!-- Open Graph / Redes Sociales -->
+    <meta property="og:title" content="Generador de Foto Carné UNAC">
+    <meta property="og:description" content="Ajusta tu foto, quita el fondo automáticamente con IA y genérala con los estándares oficiales de la UNAC y SUNEDU en segundos.">
+    <meta property="og:type" content="website">
+    
+    <!-- Favicon (Usando SVG de cámara) -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%231d52eb%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><path d=%22M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z%22/><circle cx=%2212%22 cy=%2213%22 r=%223%22/></svg>">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            50: '#eef4ff', 100: '#d9e6ff', 200: '#bcd4fe',
+                            300: '#8ebbfd', 400: '#5996fa', 500: '#3371f6',
+                            600: '#1d52eb', 700: '#153fd8', 800: '#1735af',
+                            900: '#19318a', 950: '#141f54',
+                        },
+                        accent: {
+                            50: '#fdf4ff', 100: '#fae8ff', 200: '#f5d0fe',
+                            300: '#f0abfc', 400: '#e879f9', 500: '#d946ef',
+                            600: '#c026d3', 700: '#a21caf', 800: '#86198f',
+                            900: '#701a75',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- App Styles -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body class="min-h-screen font-sans text-slate-800 pb-12">
+
+    <!-- ===== TOAST NOTIFICATIONS ===== -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-[100] flex flex-col gap-3 pointer-events-none"></div>
+
+    <!-- ===== NAVBAR ===== -->
+    <nav class="navbar sticky top-0 z-50">
+        <div class="max-w-3xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="navbar-icon-wrapper">
+                    <i data-lucide="camera" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-extrabold tracking-tight leading-none">Foto Carné UNAC</h1>
+                    <p class="text-[10px] font-medium opacity-70 tracking-widest uppercase">Generador Oficial</p>
+                </div>
+            </div>
+            <div class="step-badge" id="stepIndicator">
+                <span class="step-badge-number" id="stepBadgeNumber">1</span>
+                <span class="text-sm font-semibold">Paso 1 <span class="opacity-60">de 4</span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ===== PROGRESS BAR ===== -->
+    <div class="progress-track">
+        <div class="progress-bar" id="progressBar" style="width: 25%"></div>
+    </div>
+
+    <main class="max-w-3xl mx-auto p-4 py-8">
+
+        <!-- ===== PASO 1: SUBIR FOTO ===== -->
+        <section id="step1" class="card card-animated">
+            <div class="card-header-badge">
+                <i data-lucide="upload-cloud" class="w-4 h-4"></i> Paso 1
+            </div>
+            <h2 class="text-2xl font-extrabold mb-2 text-brand-800">Sube tu foto</h2>
+            <p class="text-slate-500 mb-8 max-w-md mx-auto">Selecciona una foto tuya de frente con buena iluminación. En el siguiente paso quitaremos el fondo.</p>
+
+            <label id="dropZone"
+                class="drop-zone group">
+                <div class="drop-zone-icon-wrapper group-hover:scale-110 transition-transform">
+                    <i data-lucide="image-plus" class="w-10 h-10 text-brand-500"></i>
+                </div>
+                <span class="text-brand-700 font-bold text-lg">Toca aquí para seleccionar tu foto</span>
+                <span class="text-slate-400 text-sm">JPG, PNG — máximo 10 MB</span>
+                <input type="file" id="fileInput" accept="image/*" class="hidden">
+            </label>
+        </section>
+
+        <!-- ===== PASO 2: QUITAR FONDO ===== -->
+        <section id="step2" class="step-hidden card card-animated">
+            <div class="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
+                <button id="btnBackTo1" class="btn-ghost">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i> Cambiar Foto
+                </button>
+                <h2 class="text-xl font-extrabold text-brand-800">Fondo Transparente</h2>
+                <div class="w-20"></div>
+            </div>
+
+            <p class="text-slate-500 mb-6 text-center text-sm">La zona a cuadros indica qué partes serán transparentes.</p>
+
+            <!-- Tabs -->
+            <div class="tab-group">
+                <button id="tabAI" class="tab tab-active">
+                    <i data-lucide="sparkles" class="inline w-4 h-4 mr-1"></i> IA Automática
+                </button>
+                <button id="tabManual" class="tab tab-inactive">
+                    <i data-lucide="mouse-pointer-click" class="inline w-4 h-4 mr-1"></i> Varita Manual
+                </button>
+            </div>
+
+            <!-- Panel IA -->
+            <div id="panelAI" class="flex flex-col items-center gap-6 mt-6">
+                <div class="info-box info-box-brand">
+                    <i data-lucide="info" class="w-4 h-4 text-brand-500 flex-shrink-0 mt-0.5"></i>
+                    <p>La IA detectará automáticamente tu cuerpo/rostro y borrará <strong>todo lo que esté afuera</strong>.</p>
+                </div>
+
+                <div class="preview-frame checker-bg">
+                    <img id="previewStep2" src="" class="max-w-full max-h-full object-contain" alt="Vista previa IA">
+                </div>
+
+                <button id="btnRemoveBg" class="btn-primary btn-accent w-full max-w-md">
+                    <i data-lucide="wand-2" class="w-5 h-5"></i>
+                    Recortarme Mágicamente (IA)
+                </button>
+                <p id="aiStatus" class="text-sm text-accent-700 font-medium hidden animate-pulse">
+                    Cargando Inteligencia Artificial... Por favor espera.
+                </p>
+            </div>
+
+            <!-- Panel Manual -->
+            <div id="panelManual" class="hidden flex-col items-center gap-4 mt-6">
+                <div class="info-box info-box-brand">
+                    <i data-lucide="info" class="w-4 h-4 text-brand-500 flex-shrink-0 mt-0.5"></i>
+                    <p><strong>Varita Mágica:</strong> Haz clic en el fondo para borrarlo. Se detendrá al chocar con tu cuerpo.</p>
+                </div>
+
+                <div class="w-full max-w-lg flex flex-col sm:flex-row gap-3 bg-slate-50/80 p-3 rounded-xl border border-slate-200">
+                    <div class="flex-1">
+                        <label class="text-xs font-bold text-slate-600 block mb-1">Modo de Borrado:</label>
+                        <select id="manualMode" class="input-field text-sm">
+                            <option value="contiguous">Varita (Solo zona continua)</option>
+                            <option value="global">Global (Todo ese color)</option>
+                        </select>
+                    </div>
+                    <div class="flex-1">
+                        <label class="text-xs font-bold text-slate-600 block mb-1">Fuerza (Tolerancia):</label>
+                        <input type="range" id="toleranceSlider" min="5" max="150" value="40"
+                            class="w-full accent-brand-600 mt-2">
+                    </div>
+                </div>
+
+                <div class="border-2 border-slate-200 rounded-xl overflow-hidden checker-bg shadow-inner relative max-w-lg w-full flex justify-center cursor-crosshair">
+                    <canvas id="manualCanvas"></canvas>
+                </div>
+
+                <button id="btnResetManual" class="text-sm text-red-500 font-semibold hover:text-red-700 transition-colors flex items-center gap-1">
+                    <i data-lucide="rotate-ccw" class="inline w-4 h-4"></i> Deshacer recortes manuales
+                </button>
+            </div>
+
+            <div class="mt-8 pt-6 border-t border-slate-100 flex flex-col sm:flex-row gap-4 justify-center">
+                <button id="btnSkipBg" class="btn-secondary">
+                    Omitir (Ya es blanco)
+                </button>
+                <button id="btnConfirmBg" class="btn-primary btn-success">
+                    <i data-lucide="check" class="w-5 h-5"></i> Confirmar y Continuar
+                </button>
+            </div>
+        </section>
+
+        <!-- ===== PASO 3: ENCUADRE ===== -->
+        <section id="step3" class="step-hidden card card-animated">
+            <div class="card-header-badge">
+                <i data-lucide="crop" class="w-4 h-4"></i> Paso 3
+            </div>
+            <h2 class="text-2xl font-extrabold mb-2 text-brand-800 text-center">Recorte Perfecto UNAC</h2>
+            <p class="text-slate-500 mb-6 text-center text-sm max-w-md mx-auto">
+                Arrastra para acomodar tu rostro. La imagen llenará siempre el cuadro para que no se deforme tu cara ni queden espacios en blanco.
+            </p>
+
+            <div class="flex flex-col items-center">
+                <div class="crop-container bg-white" id="cropContainer">
+                    <img id="imageCropper" class="crop-image" src="" alt="Para recortar" draggable="false">
+                </div>
+
+                <div class="w-full max-w-[240px] mt-6 flex items-center gap-3">
+                    <i data-lucide="zoom-out" class="w-5 h-5 text-slate-400"></i>
+                    <input type="range" id="zoomSlider" min="1" max="3" step="0.02" value="1"
+                        class="w-full accent-brand-600">
+                    <i data-lucide="zoom-in" class="w-5 h-5 text-slate-400"></i>
+                </div>
+
+                <div class="flex gap-4 w-full max-w-md mt-8">
+                    <button id="btnBackTo2" class="btn-secondary flex-1">
+                        <i data-lucide="arrow-left" class="w-5 h-5"></i> Volver
+                    </button>
+                    <button id="btnApplyCrop" class="btn-primary flex-1">
+                        Siguiente <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== PASO 4: DATOS & EXPORTAR ===== -->
+        <section id="step4" class="step-hidden card card-animated">
+            <div class="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
+                <button id="btnBackTo3" class="btn-ghost">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i> Editar Recorte
+                </button>
+                <h2 class="text-xl font-extrabold text-brand-800">Exportar Foto</h2>
+                <div class="w-24"></div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-8 items-center sm:items-start justify-center">
+                <!-- Vista Final -->
+                <div class="flex-shrink-0 flex flex-col items-center">
+                    <p class="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Resultado Final</p>
+                    <div class="final-preview-frame">
+                        <img id="previewFinal" src="" class="w-full h-full object-cover" alt="Resultado Final">
+                    </div>
+                </div>
+
+                <!-- Formulario -->
+                <div class="w-full max-w-sm flex flex-col gap-4">
+                    <div>
+                        <label class="label" for="docType">Tipo de Documento</label>
+                        <select id="docType" class="input-field">
+                            <option value="1">1: DNI</option>
+                            <option value="2">2: Pasaporte (PAS)</option>
+                            <option value="3">3: Carné de Extranjería (CE)</option>
+                            <option value="4">4: Cédula de Identidad (CI)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="label" for="docNumber">Número de Documento</label>
+                        <input type="text" id="docNumber" placeholder="Ej: 71234567"
+                            class="input-field" maxlength="20">
+                        <p id="docNumberError" class="field-error hidden">
+                            <i data-lucide="alert-circle" class="w-3.5 h-3.5 inline"></i>
+                            Ingresa tu número de documento
+                        </p>
+                    </div>
+
+                    <button id="btnGenerate" class="btn-primary mt-4 shadow-lg shadow-brand-500/20">
+                        <i data-lucide="download" class="w-5 h-5"></i>
+                        Descargar Foto
+                    </button>
+
+                    <!-- Validación SUNEDU -->
+                    <div id="suneduBox" class="hidden sunedu-box">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i data-lucide="shield-check" class="w-5 h-5 text-emerald-600"></i>
+                            <p class="text-sm text-emerald-800 font-bold">¡Foto lista!</p>
+                        </div>
+                        <p class="text-sm text-emerald-700 mb-3">Verifica que te salga "VÁLIDO" en la SUNEDU.</p>
+                        <a href="https://siucarne.sunedu.gob.pe/carne/validacion" target="_blank"
+                            class="sunedu-link">
+                            Ir a SUNEDU <i data-lucide="external-link" class="w-4 h-4"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="text-center py-6 text-sm text-slate-400">
+        <p>Herramienta no oficial — Uso educativo</p>
+    </footer>
+
+    <!-- App Scripts -->
+    <script src="js/toast.js"></script>
+    <script src="js/steps.js"></script>
+    <script src="js/background-removal.js"></script>
+    <script src="js/crop.js"></script>
+    <script src="js/export.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>
